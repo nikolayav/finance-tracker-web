@@ -1,26 +1,11 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBudgets, createBudget, deleteBudget } from "@/api/budgets";
 import { getTransactions } from "@/api/transactions";
 import { TransactionType } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   PlusIcon,
@@ -29,6 +14,11 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
+import { PageHeader } from "@/components/common/PageHeader";
+import { EmptyStateCard } from "@/components/common/EmptyStateCard";
+import { InputField } from "@/components/common/InputField";
+import { SelectField } from "@/components/common/SelectField";
+import { FormDialog } from "@/components/common/FormDialog";
 
 const CATEGORIES = [
   "Salary",
@@ -118,7 +108,7 @@ export default function BudgetsPage() {
     setError("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: { preventDefault(): void }) => {
     e.preventDefault();
     setError("");
     createMutation.mutate();
@@ -148,80 +138,64 @@ export default function BudgetsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Budgets
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Set and track your spending limits
-          </p>
-        </div>
-        <Button
-          onClick={() => setIsDialogOpen(true)}
-          className="flex items-center gap-2 dark:text-white"
-        >
-          <PlusIcon className="w-4 h-4" />
-          Add budget
-        </Button>
-      </div>
+      <PageHeader
+        title="Budgets"
+        subtitle="Set and track your spending limits"
+        action={
+          <Button
+            onClick={() => setIsDialogOpen(true)}
+            className="flex items-center gap-2 dark:text-white"
+          >
+            <PlusIcon className="w-4 h-4" />
+            Add budget
+          </Button>
+        }
+      />
 
       <Card className="dark:bg-gray-900 dark:border-gray-700">
         <CardContent className="pt-6">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="dark:text-gray-300">Month</Label>
-              <Select value={filterMonth} onValueChange={setFilterMonth}>
-                <SelectTrigger className="w-full dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MONTHS.map((m) => (
-                    <SelectItem key={m.value} value={String(m.value)}>
-                      {m.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label className="dark:text-gray-300">Year</Label>
-              <Select value={filterYear} onValueChange={setFilterYear}>
-                <SelectTrigger className="w-full dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map((y) => (
-                    <SelectItem key={y} value={String(y)}>
-                      {y}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <SelectField
+              label="Month"
+              value={filterMonth}
+              onValueChange={setFilterMonth}
+            >
+              {MONTHS.map((m) => (
+                <SelectItem key={m.value} value={String(m.value)}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectField>
+            <SelectField
+              label="Year"
+              value={filterYear}
+              onValueChange={setFilterYear}
+            >
+              {years.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectField>
           </div>
         </CardContent>
       </Card>
 
       {budgets.length === 0 ? (
-        <Card className="dark:bg-gray-900 dark:border-gray-700">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <CalculatorIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 font-medium">
-              No budgets for this period
-            </p>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-              Create a budget to track your spending
-            </p>
+        <EmptyStateCard
+          icon={CalculatorIcon}
+          title="No budgets for this period"
+          subtitle="Create a budget to track your spending"
+          action={
             <Button
-              className="mt-4 flex items-center gap-2 dark:text-white"
+              className="flex items-center gap-2 dark:text-white"
               onClick={() => setIsDialogOpen(true)}
             >
               <PlusIcon className="w-4 h-4" />
               Add budget
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {budgets.map((budget) => {
@@ -308,126 +282,74 @@ export default function BudgetsPage() {
         </div>
       )}
 
-      <Dialog
+      <FormDialog
         open={isDialogOpen}
         onOpenChange={(open) => {
           setIsDialogOpen(open);
           if (!open) resetForm();
         }}
+        title="Add budget"
+        error={error}
+        onSubmit={handleSubmit}
+        submitLabel="Add budget"
+        submittingLabel="Creating..."
+        isSubmitting={createMutation.isPending}
       >
-        <DialogContent className="dark:bg-gray-900 dark:border-gray-700">
-          <DialogHeader>
-            <DialogTitle className="dark:text-white">Add budget</DialogTitle>
-          </DialogHeader>
+        <SelectField
+          label="Category"
+          value={categoryName}
+          onValueChange={setCategoryName}
+          placeholder="Select category"
+        >
+          {CATEGORIES.map((c) => (
+            <SelectItem key={c} value={c}>
+              {c}
+            </SelectItem>
+          ))}
+        </SelectField>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950 px-3 py-2 rounded-md">
-                {error}
-              </p>
-            )}
+        <div className="grid grid-cols-2 gap-4">
+          <InputField
+            label="Limit amount"
+            type="number"
+            placeholder="0.00"
+            min="0.01"
+            step="0.01"
+            value={limitAmount}
+            onChange={(e) => setLimitAmount(e.target.value)}
+            required
+          />
+          <SelectField
+            label="Currency"
+            value={currency}
+            onValueChange={setCurrency}
+          >
+            {CURRENCIES.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
+          </SelectField>
+        </div>
 
-            <div className="space-y-2">
-              <Label className="dark:text-gray-300">Category</Label>
-              <Select value={categoryName} onValueChange={setCategoryName}>
-                <SelectTrigger className="w-full dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="grid grid-cols-2 gap-4">
+          <SelectField label="Month" value={month} onValueChange={setMonth}>
+            {MONTHS.map((m) => (
+              <SelectItem key={m.value} value={String(m.value)}>
+                {m.label}
+              </SelectItem>
+            ))}
+          </SelectField>
+          <SelectField label="Year" value={year} onValueChange={setYear}>
+            {years.map((y) => (
+              <SelectItem key={y} value={String(y)}>
+                {y}
+              </SelectItem>
+            ))}
+          </SelectField>
+        </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="dark:text-gray-300">Limit amount</Label>
-                <Input
-                  type="number"
-                  placeholder="0.00"
-                  min="0.01"
-                  step="0.01"
-                  value={limitAmount}
-                  onChange={(e) => setLimitAmount(e.target.value)}
-                  required
-                  className="dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="dark:text-gray-300">Currency</Label>
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger className="w-full dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CURRENCIES.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="dark:text-gray-300">Month</Label>
-                <Select value={month} onValueChange={setMonth}>
-                  <SelectTrigger className="w-full dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MONTHS.map((m) => (
-                      <SelectItem key={m.value} value={String(m.value)}>
-                        {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label className="dark:text-gray-300">Year</Label>
-                <Select value={year} onValueChange={setYear}>
-                  <SelectTrigger className="w-full dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {years.map((y) => (
-                      <SelectItem key={y} value={String(y)}>
-                        {y}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-                className="dark:border-gray-600 dark:text-gray-300"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending}
-                className="flex items-center gap-2 dark:text-white"
-              >
-                <PlusIcon className="w-4 h-4" />
-                {createMutation.isPending ? "Creating..." : "Add budget"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      </FormDialog>
     </div>
   );
 }

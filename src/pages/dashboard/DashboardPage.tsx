@@ -1,4 +1,4 @@
-﻿import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getAccounts } from "@/api/accounts";
 import { getTransactions } from "@/api/transactions";
 import { TransactionType } from "@/types";
@@ -22,6 +22,9 @@ import {
   ArrowDownCircleIcon,
   ScaleIcon,
 } from "@heroicons/react/24/outline";
+import { PageHeader } from "@/components/common/PageHeader";
+import { StatCard } from "@/components/common/StatCard";
+import { TransactionListItem } from "@/components/common/TransactionListItem";
 
 const COLORS = [
   "#6366f1",
@@ -119,110 +122,58 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          Dashboard
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {new Date().toLocaleString("default", {
-            month: "long",
-            year: "numeric",
-          })}{" "}
-          overview
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle={`${new Date().toLocaleString("default", {
+          month: "long",
+          year: "numeric",
+        })} overview`}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="dark:bg-gray-900 dark:border-gray-700">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                <BanknotesIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Total balance
-                </p>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {formatCurrency(totalBalance)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="dark:bg-gray-900 dark:border-gray-700">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                <ArrowUpCircleIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Monthly income
-                </p>
-                <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                  +{formatCurrency(monthlyIncome)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="dark:bg-gray-900 dark:border-gray-700">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
-                <ArrowDownCircleIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Monthly expenses
-                </p>
-                <p className="text-lg font-semibold text-red-600 dark:text-red-400">
-                  -{formatCurrency(monthlyExpenses)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="dark:bg-gray-900 dark:border-gray-700">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  netBalance >= 0
-                    ? "bg-blue-100 dark:bg-blue-900"
-                    : "bg-orange-100 dark:bg-orange-900"
-                }`}
-              >
-                <ScaleIcon
-                  className={`w-5 h-5 ${
-                    netBalance >= 0
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-orange-600 dark:text-orange-400"
-                  }`}
-                />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Net this month
-                </p>
-                <p
-                  className={`text-lg font-semibold ${
-                    netBalance >= 0
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-orange-600 dark:text-orange-400"
-                  }`}
-                >
-                  {netBalance >= 0 ? "+" : ""}
-                  {formatCurrency(netBalance)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          icon={BanknotesIcon}
+          iconBg="bg-indigo-100 dark:bg-indigo-900"
+          iconColor="text-indigo-600 dark:text-indigo-400"
+          label="Total balance"
+          value={formatCurrency(totalBalance)}
+        />
+        <StatCard
+          icon={ArrowUpCircleIcon}
+          iconBg="bg-green-100 dark:bg-green-900"
+          iconColor="text-green-600 dark:text-green-400"
+          label="Monthly income"
+          value={`+${formatCurrency(monthlyIncome)}`}
+          valueColor="text-green-600 dark:text-green-400"
+        />
+        <StatCard
+          icon={ArrowDownCircleIcon}
+          iconBg="bg-red-100 dark:bg-red-900"
+          iconColor="text-red-600 dark:text-red-400"
+          label="Monthly expenses"
+          value={`-${formatCurrency(monthlyExpenses)}`}
+          valueColor="text-red-600 dark:text-red-400"
+        />
+        <StatCard
+          icon={ScaleIcon}
+          iconBg={
+            netBalance >= 0
+              ? "bg-blue-100 dark:bg-blue-900"
+              : "bg-orange-100 dark:bg-orange-900"
+          }
+          iconColor={
+            netBalance >= 0
+              ? "text-blue-600 dark:text-blue-400"
+              : "text-orange-600 dark:text-orange-400"
+          }
+          label="Net this month"
+          value={`${netBalance >= 0 ? "+" : ""}${formatCurrency(netBalance)}`}
+          valueColor={
+            netBalance >= 0
+              ? "text-blue-600 dark:text-blue-400"
+              : "text-orange-600 dark:text-orange-400"
+          }
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -340,46 +291,10 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-3">
               {recentTransactions.map((transaction) => (
-                <div
+                <TransactionListItem
                   key={transaction.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        transaction.type === TransactionType.Income
-                          ? "bg-green-100 dark:bg-green-900"
-                          : "bg-red-100 dark:bg-red-900"
-                      }`}
-                    >
-                      {transaction.type === TransactionType.Income ? (
-                        <ArrowUpCircleIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
-                      ) : (
-                        <ArrowDownCircleIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {transaction.categoryName}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {transaction.description &&
-                          `${transaction.description} · `}
-                        {new Date(transaction.occurredOn).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <p
-                    className={`text-sm font-semibold ${
-                      transaction.type === TransactionType.Income
-                        ? "text-green-600 dark:text-green-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}
-                  >
-                    {transaction.type === TransactionType.Income ? "+" : "-"}
-                    {formatCurrency(transaction.amount)}
-                  </p>
-                </div>
+                  transaction={transaction}
+                />
               ))}
             </div>
           )}

@@ -16,9 +16,9 @@ client.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      //localStorage.removeItem("fp_token");
-      //localStorage.removeItem("fp_user");
-      //window.location.href = "/login";
+      localStorage.removeItem("fp_token");
+      localStorage.removeItem("fp_user");
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }
