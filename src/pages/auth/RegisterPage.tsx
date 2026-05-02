@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ErrorAlert } from "@/components/common/ErrorAlert";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ export default function RegisterPage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: { preventDefault(): void }) => {
     e.preventDefault();
     setError("");
     mutation.mutate();
@@ -54,11 +55,7 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && (
-              <div className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-md">
-                {error}
-              </div>
-            )}
+            {error && <ErrorAlert error={error} />}
 
             <div className="space-y-2">
               <Label htmlFor="displayName">Full name</Label>

@@ -1,25 +1,10 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAccounts, createAccount, deleteAccount } from "@/api/accounts";
 import { AccountType } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   BuildingLibraryIcon,
@@ -29,6 +14,11 @@ import {
   CreditCardIcon,
   WalletIcon,
 } from "@heroicons/react/24/outline";
+import { PageHeader } from "@/components/common/PageHeader";
+import { EmptyStateCard } from "@/components/common/EmptyStateCard";
+import { InputField } from "@/components/common/InputField";
+import { SelectField } from "@/components/common/SelectField";
+import { FormDialog } from "@/components/common/FormDialog";
 
 const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   [AccountType.Checking]: "Checking",
@@ -85,7 +75,7 @@ export default function AccountsPage() {
     setError("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: { preventDefault(): void }) => {
     e.preventDefault();
     setError("");
     createMutation.mutate();
@@ -103,23 +93,19 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Accounts
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Manage your financial accounts
-          </p>
-        </div>
-        <Button
-          onClick={() => setIsDialogOpen(true)}
-          className="flex items-center gap-2"
-        >
-          <PlusIcon className="w-4 h-4" />
-          Add account
-        </Button>
-      </div>
+      <PageHeader
+        title="Accounts"
+        subtitle="Manage your financial accounts"
+        action={
+          <Button
+            onClick={() => setIsDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <PlusIcon className="w-4 h-4" />
+            Add account
+          </Button>
+        }
+      />
 
       <Card className="dark:bg-gray-900 dark:border-gray-700">
         <CardContent className="pt-6">
@@ -139,15 +125,11 @@ export default function AccountsPage() {
       </Card>
 
       {accounts.length === 0 ? (
-        <Card className="dark:bg-gray-900 dark:border-gray-700">
-          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <BuildingLibraryIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 font-medium">
-              No accounts yet
-            </p>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-              Add your first account to get started
-            </p>
+        <EmptyStateCard
+          icon={BuildingLibraryIcon}
+          title="No accounts yet"
+          subtitle="Add your first account to get started"
+          action={
             <Button
               onClick={() => setIsDialogOpen(true)}
               className="flex items-center gap-2 dark:text-white"
@@ -155,8 +137,8 @@ export default function AccountsPage() {
               <PlusIcon className="w-4 h-4" />
               Add account
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {accounts.map((account) => {
@@ -205,96 +187,51 @@ export default function AccountsPage() {
         </div>
       )}
 
-      <Dialog
+      <FormDialog
         open={isDialogOpen}
         onOpenChange={(open) => {
           setIsDialogOpen(open);
           if (!open) resetForm();
         }}
+        title="Add account"
+        error={error}
+        onSubmit={handleSubmit}
+        submitLabel="Create account"
+        submittingLabel="Creating..."
+        isSubmitting={createMutation.isPending}
       >
-        <DialogContent className="dark:bg-gray-900 dark:border-gray-700">
-          <DialogHeader>
-            <DialogTitle className="dark:text-white">Add account</DialogTitle>
-          </DialogHeader>
+        <InputField
+          label="Account name"
+          placeholder="e.g. Main Checking"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950 px-3 py-2 rounded-md">
-                {error}
-              </p>
-            )}
+        <SelectField
+          label="Account type"
+          value={String(type)}
+          onValueChange={(val) => setType(Number(val) as AccountType)}
+        >
+          {Object.entries(ACCOUNT_TYPE_LABELS).map(([value, label]) => (
+            <SelectItem key={value} value={value} className="dark:text-white">
+              {label}
+            </SelectItem>
+          ))}
+        </SelectField>
 
-            <div className="space-y-2">
-              <Label className="dark:text-gray-300">Account name</Label>
-              <Input
-                placeholder="e.g. Main Checking"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="dark:bg-gray-800 dark:border-gray-600 dark:text-white"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="dark:text-gray-300">Account type</Label>
-              <Select
-                value={String(type)}
-                onValueChange={(val) => setType(Number(val) as AccountType)}
-              >
-                <SelectTrigger className="dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-600">
-                  {Object.entries(ACCOUNT_TYPE_LABELS).map(([value, label]) => (
-                    <SelectItem
-                      key={value}
-                      value={value}
-                      className="dark:text-white"
-                    >
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="dark:text-gray-300">Currency</Label>
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="dark:bg-gray-800 dark:border-gray-600 dark:text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:border-gray-600">
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c} value={c} className="dark:text-white">
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-                className="dark:border-gray-600 dark:text-gray-300"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending}
-                className="flex items-center gap-2 dark:text-white"
-              >
-                <PlusIcon className="w-4 h-4" />
-                {createMutation.isPending ? "Creating..." : "Create account"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        <SelectField
+          label="Currency"
+          value={currency}
+          onValueChange={setCurrency}
+        >
+          {CURRENCIES.map((c) => (
+            <SelectItem key={c} value={c} className="dark:text-white">
+              {c}
+            </SelectItem>
+          ))}
+        </SelectField>
+      </FormDialog>
     </div>
   );
 }
