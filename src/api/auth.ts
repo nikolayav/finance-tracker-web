@@ -24,3 +24,7 @@ export const login = async (
   });
   return data;
 };
+
+export const logout = async (): Promise<void> => {
+  return Promise.resolve();
+};
